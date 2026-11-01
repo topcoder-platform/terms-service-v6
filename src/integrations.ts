@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { importPKCS8, SignJWT } from 'jose';
+import { decodeJwt, importPKCS8, SignJWT } from 'jose';
 import { createPrivateKey } from 'node:crypto';
 import { config } from './config.js';
 import { ApiError } from './errors.js';
@@ -23,9 +23,10 @@ export class Integrations {
     if (this.pendingToken) return this.pendingToken;
     this.pendingToken = this.request(config.AUTH0_PROXY_SERVER_URL || config.AUTH0_URL, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ grant_type: 'client_credentials', client_id: config.AUTH0_CLIENT_ID, client_secret: config.AUTH0_CLIENT_SECRET, audience: config.AUTH0_AUDIENCE })
+      body: JSON.stringify({ grant_type: 'client_credentials', client_id: config.AUTH0_CLIENT_ID, client_secret: config.AUTH0_CLIENT_SECRET, audience: config.AUTH0_AUDIENCE, auth0_url: config.AUTH0_URL })
     }).then(body => {
-      this.token = { value: body.access_token, expires: Date.now() + Math.min(Number(body.expires_in || 3600) - 60, Number(config.TOKEN_CACHE_TIME) * 60) * 1000 };
+      if (!body.access_token) throw new Error('Unknown Error');
+      this.token = { value: body.access_token, expires: Number(decodeJwt(body.access_token).exp) * 1000 - 60000 };
       return body.access_token;
     }).finally(() => { this.pendingToken = undefined; });
     return this.pendingToken!;
