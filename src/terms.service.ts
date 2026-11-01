@@ -90,7 +90,7 @@ export class TermsService {
   async createTermsOfUse(user: User, data: Input) {
     await this.validateTerm(data);
     const input: Input = { ...data, created: new Date(), createdBy: user.handle || user.sub };
-    const created = await this.db.termsOfUse.create({ data: this.termData(input) as Prisma.TermsOfUseCreateInput });
+    const created = await this.db.termsOfUse.create({ data: { agreeabilityTypeId: config.AGREE_ELECTRONICALLY, ...this.termData(input) } as Prisma.TermsOfUseCreateInput });
     input.id = created.id;
     if (data.docusignTemplateId) await this.db.termsOfUseDocusignTemplateXref.create({ data: { termsOfUseId: created.id, docusignTemplateId: data.docusignTemplateId } });
     await this.events.postEvent(config.TERMS_CREATE_TOPIC, input);
