@@ -47,7 +47,7 @@ def deploy():
     auth = ecr.get_authorization_token()['authorizationData'][0]
     username, password = base64.b64decode(auth['authorizationToken']).decode().split(':', 1)
     subprocess.run(['docker', 'login', '--username', username, '--password-stdin', auth['proxyEndpoint']], input=password, text=True, check=True)
-    subprocess.run(['docker', 'build', '--pull', '-t', image, '.'], check=True)
+    subprocess.run(['docker', 'build', '--pull', '--provenance=false', '-t', image, '.'], check=True)
     subprocess.run(['docker', 'push', image], check=True)
     digest = ecr.describe_images(repositoryName=settings['repository'], imageIds=[{'imageTag': tag}])['imageDetails'][0]['imageDigest']
     try:
