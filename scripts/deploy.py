@@ -50,15 +50,17 @@ def deploy():
     subprocess.run(['docker', 'build', '--pull', '--provenance=false', '-t', image, '.'], check=True)
     subprocess.run(['docker', 'push', image], check=True)
     digest = ecr.describe_images(repositoryName=settings['repository'], imageIds=[{'imageTag': tag}])['imageDetails'][0]['imageDigest']
-    try:
-        ecr.start_image_scan(repositoryName=settings['repository'], imageId={'imageDigest': digest})
-    except ecr.exceptions.LimitExceededException:
-        pass  # scan-on-push may already have started a scan
+    scan_type = ecr.get_registry_scanning_configuration()['scanningConfiguration']['scanType']
+    if scan_type == 'BASIC':
+        try:
+            ecr.start_image_scan(repositoryName=settings['repository'], imageId={'imageDigest': digest})
+        except ecr.exceptions.LimitExceededException:
+            pass
     deadline = time.monotonic() + 900
     while time.monotonic() < deadline:
         scan = ecr.describe_image_scan_findings(repositoryName=settings['repository'], imageId={'imageDigest': digest})
         status = scan.get('imageScanStatus', {}).get('status')
-        if status == 'COMPLETE':
+        if status == 'COMPLETE' or (status == 'ACTIVE' and scan.get('imageScanFindings', {}).get('imageScanCompletedAt')):
             counts = scan['imageScanFindings'].get('findingSeverityCounts', {})
             if any(counts.get(level, 0) for level in ['CRITICAL', 'HIGH', 'MEDIUM']):
                 raise RuntimeError(f'ECR scan blocks deployment: {counts}')

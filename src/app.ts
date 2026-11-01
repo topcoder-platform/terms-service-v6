@@ -26,6 +26,8 @@ export async function createApp() {
   app.useGlobalFilters(new ErrorFilter());
   const express = app.getHttpAdapter().getInstance();
   express.set('query parser', 'extended');
+  express.set('json escape', true);
+  express.use((_req: unknown, res: any, next: () => void) => { res.set('X-Content-Type-Options', 'nosniff'); next(); });
   const docs = YAML.parse(readFileSync(new URL('../docs/swagger.yaml', import.meta.url), 'utf8'));
   express.use(`${config.BASE_PATH}/terms/docs`, swaggerUi.serve, swaggerUi.setup(docs));
   await app.init();
