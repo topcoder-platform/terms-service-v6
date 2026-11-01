@@ -1,0 +1,1549 @@
+openapi: 3.0.0
+info:
+  title: Terms V5 API
+  description: Topcoder Terms API
+  version: 1.0.0
+tags:
+  - name: TermsOfUse
+  - name: Docusign
+  - name: TermsReference
+paths:
+  /terms:
+    post:
+      tags:
+        - TermsOfUse
+      description: |
+        Create terms of use.
+
+        **Authorization** M2M token with write terms scope is allowed
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermsOfUseRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermsOfUse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - TermsOfUse
+      description: |
+        Search terms of use.
+
+        **Authorization** M2M token with read terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: The page number.
+        - in: query
+          name: perPage
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: The number of items to list per page.
+        - in: query
+          name: legacyId
+          required: false
+          schema:
+            type: integer
+          description: The legacy id.
+        - in: query
+          name: userId
+          required: false
+          schema:
+            type: string
+          description: The comma separated list of user ids
+        - in: query
+          name: title
+          required: false
+          schema:
+            type: string
+          description: The search string
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TermsOfUse'
+          headers:
+            X-Next-Page:
+              schema:
+                type: integer
+                description: The index of the next page
+            X-Page:
+              schema:
+                type: integer
+                description: The index of the current page (starting at 1)
+            X-Per-Page:
+              schema:
+                type: integer
+                description: The number of items to list per page
+            X-Prev-Page:
+              schema:
+                type: integer
+                description: The index of the previous page
+            X-Total:
+              schema:
+                type: integer
+                description: The total number of items
+            X-Total-Pages:
+              schema:
+                type: integer
+                description: The total number of pages
+            Link:
+              schema:
+                type: string
+                description: Pagination link header.
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/:termsOfUseId:
+    get:
+      tags:
+        - TermsOfUse
+      description: |
+        Get terms of use. The Bearer Authorization header is optional
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsOfUseId
+          description: The id of terms of use
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: userId
+          required: false
+          schema:
+            type: string
+          description: The user ID to use if the endpoint is being called using and M2M/admin token. This is optional for admin tokens but required for M2M tokens
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 21303
+                  title:
+                    type: string
+                    example: "Standard Terms for Topcoder Competitions v2.2"
+                  url:
+                    type: string
+                    example: ""
+                  text:
+                    type: string
+                    example: "text"
+                  agreed:
+                    type: boolean
+                    example: true
+                  docusignTemplateId:
+                    type: string
+                  agreeabilityType:
+                    type: string
+                    example: "Electronically-agreeable"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - TermsOfUse
+      description: |
+        Update terms of use.
+
+        **Authorization** M2M token with write terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsOfUseId
+          description: The id of terms of use
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermsOfUseRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermsOfUse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - TermsOfUse
+      description: |
+        Update terms of use.
+
+        **Authorization** M2M token with write terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsOfUseId
+          description: The id of terms of use
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermsOfUsePatchRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermsOfUse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - TermsOfUse
+      description: |
+        Delete terms of use.
+
+        **Authorization** M2M token with write terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsOfUseId
+          description: The id of terms of use
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: OK
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/:termsOfUseId/agree:
+    post:
+      tags:
+        - TermsOfUse
+      description: |
+        Agree the terms of use
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsOfUseId
+          description: The id of terms of use
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/:termsOfUseId/users:
+    get:
+      tags:
+        - TermsOfUse
+      description: |
+        List users who signed a term
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsOfUseId
+          description: The id of terms of use
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+          headers:
+            X-Next-Page:
+              schema:
+                type: integer
+                description: The index of the next page
+            X-Page:
+              schema:
+                type: integer
+                description: The index of the current page (starting at 1)
+            X-Per-Page:
+              schema:
+                type: integer
+                description: The number of items to list per page
+            X-Prev-Page:
+              schema:
+                type: integer
+                description: The index of the previous page
+            X-Total:
+              schema:
+                type: integer
+                description: The total number of items
+            X-Total-Pages:
+              schema:
+                type: integer
+                description: The total number of pages
+            Link:
+              schema:
+                type: string
+                description: Pagination link header.
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - TermsOfUse
+      description: |
+        Sign a term of use for a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsOfUseId
+          description: The id of terms of use
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/:termsOfUseId/users/:userId:
+    delete:
+      tags:
+        - TermsOfUse
+      description: |
+        - Unsign a term of use for a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsOfUseId
+          description: The id of terms of use
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          description: The id of user
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'  
+  /terms/docusignViewURL:
+    post:
+      tags:
+        - Docusign
+      description: |
+        Generate Docusign View URL
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - templateId
+                - tabs
+              properties:
+                templateId:
+                  description: The template id
+                  type: string
+                tabs:
+                  description: The tabs array
+                  type: array
+                  items:
+                    type: string
+                    example: "label||value"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipientViewUrl:
+                    type: string
+                  envelopeId:
+                    type: string
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/docusignCallback:
+    post:
+      tags:
+        - Docusign
+      description: |
+        Docusign Callback
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - envelopeStatus
+                - envelopeId
+                - tabs
+                - connectKey
+              properties:
+                envelopeStatus:
+                  description: the envelope status
+                  type: string
+                envelopeId:
+                  description: the envelope id
+                  type: string
+                tabs:
+                  description: The tabs array
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tab'
+                connectKey:
+                  description: the connect key
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/reference:
+    post:
+      tags:
+        - TermsReference
+      description: |
+        Create terms for resource.
+
+        **Authorization** M2M token with write terms scope is allowed
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermsForResourceRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermsForResource'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - TermsReference
+      description: |
+        Search terms for resources.
+
+        **Authorization** M2M token with read terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: The page number.
+        - in: query
+          name: perPage
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: The number of items to list per page.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TermsForResource'
+          headers:
+            X-Next-Page:
+              schema:
+                type: integer
+                description: The index of the next page
+            X-Page:
+              schema:
+                type: integer
+                description: The index of the current page (starting at 1)
+            X-Per-Page:
+              schema:
+                type: integer
+                description: The number of items to list per page
+            X-Prev-Page:
+              schema:
+                type: integer
+                description: The index of the previous page
+            X-Total:
+              schema:
+                type: integer
+                description: The total number of items
+            X-Total-Pages:
+              schema:
+                type: integer
+                description: The total number of pages
+            Link:
+              schema:
+                type: string
+                description: Pagination link header.
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/reference/:termsForResourceId:
+    get:
+      tags:
+        - TermsReference
+      description: |
+        Get terms for resource.
+
+        **Authorization** M2M token with read terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsForResourceId
+          description: The id of terms for resource
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermsForResource'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - TermsReference
+      description: |
+        Update terms for resource.
+
+        **Authorization** M2M token with write terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsForResourceId
+          description: The id of terms for resource
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermsForResourceRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermsForResource'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - TermsReference
+      description: |
+        Update terms for resource
+
+        **Authorization** M2M token with write terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsForResourceId
+          description: The id of terms for resource
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermsForResourcePatchRequestBody'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermsForResource'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - TermsReference
+      description: |
+        Delete terms for resource.
+
+        **Authorization** M2M token with write terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: termsForResourceId
+          description: The id of terms for resource
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: OK
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/user/:userId/reference:
+    get:
+      tags:
+        - TermsReference
+      description: |
+        Checking whether the user has agreed to terms for a resource
+
+        **Authorization** M2M token with read terms scope is allowed
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          description: The user id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: reference
+          required: true
+          schema:
+            type: string
+          description: the resource name
+          example: 'challenge'
+        - in: query
+          name: referenceId
+          required: true
+          schema:
+            type: string
+          description: the resource id
+          example: '12345'
+        - in: query
+          name: tags
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          description: an array of tag(roles)
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CheckResultItem'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/types:
+    get:
+      tags:
+        - Types
+      description: |
+        List all types of terms of uses.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    title:
+                      type: string
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/agreeability-types:
+    get:
+      tags:
+        - Agreeability Types
+      description: |
+        List all agreeability types for terms of uses.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    legacyId:
+                      type: number
+                    name:
+                      type: string
+                    description:
+                      type: string
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /terms/agreeability-types/:id:
+    get:
+      tags:
+        - Agreeability Types
+      description: |
+        Get One agreeability types by ID
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  legacyId:
+                    type: number
+                  name:
+                    type: string
+                  description:
+                    type: string
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                  
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TermsOfUse:
+      required:
+        - id
+        - typeId
+        - title
+        - agreeabilityTypeId
+        - creted
+        - createdBy
+      properties:
+        id:
+          type: string
+        legacyId:
+          type: integer
+        text:
+          type: string
+        typeId:
+          type: integer
+        title:
+          type: string
+        url:
+          type: string
+        agreeabilityTypeId:
+          type: string
+        docusignTemplateId:
+          type: string
+        created:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          example: 'topocder user'
+        updated:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+          example: 'topcoder user'
+    TermsOfUsePatchRequestBody:
+      properties:
+        text:
+          type: string
+        typeId:
+          type: integer
+        title:
+          type: string
+        url:
+          type: string
+        agreeabilityTypeId:
+          type: string
+        docusignTemplateId:
+          type: string
+    TermsOfUseRequestBody:
+      required:
+        - typeId
+        - title
+        - agreeabilityTypeId
+      properties:
+        text:
+          type: string
+        typeId:
+          type: integer
+        legacyId:
+          type: integer
+        title:
+          type: string
+        url:
+          type: string
+        agreeabilityTypeId:
+          type: string
+        docusignTemplateId:
+          type: string
+    TermsForResource:
+      required:
+        - id
+        - reference
+        - referenceId
+        - tag
+        - termsOfUseIds
+      properties:
+        id:
+          type: string
+          format: uuid
+        reference:
+          type: string
+        referenceId:
+          type: string
+        tag:
+          type: string
+        termsOfUseIds:
+          type: array
+          items:
+            type: string
+        created:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          example: 'topocder user'
+        updated:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+          example: 'topcoder user'
+    TermsForResourcePatchRequestBody:
+      properties:
+        reference:
+          type: string
+        referenceId:
+          type: string
+        tag:
+          type: string
+        termsOfUseIds:
+          type: array
+          items:
+            type: string
+    TermsForResourceRequestBody:
+      required:
+        - reference
+        - referenceId
+        - tag
+        - termsOfUseIds
+      properties:
+        reference:
+          type: string
+        referenceId:
+          type: string
+        tag:
+          type: string
+        termsOfUseIds:
+          type: array
+          items:
+            type: string
+    CheckResultItem:
+      properties:
+        tag:
+          type: string
+        allAgreed:
+          type: boolean
+        unAgreedTerms:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              title:
+                type: string
+              url:
+                type: string
+              text:
+                type: string
+              agreed:
+                type: boolean
+              docusignTemplateId:
+                type: string
+              agreeabilityType:
+                type: string
+    Tab:
+      required:
+        - tabLabel
+        - tabValue
+      properties:
+        tabLabel:
+          type: string
+        tabValue:
+          type: string
+    Error:
+      required:
+        - message
+      properties:
+        message:
+          type: string

@@ -1,0 +1,1 @@
+export const legacyPaths = ["/terms/docusignViewURL","/terms/reference","/terms/types","/terms/agreeability-types","/terms/agreeability-types/:id","/terms","/terms/:termsOfUseId","/terms/:termsOfUseId/agree","/terms/reference/:termsForResourceId","/terms/user/:userId/reference","/terms/:termsOfUseId/users","/terms/:termsOfUseId/users/:userId"];

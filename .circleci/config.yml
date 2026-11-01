@@ -1,0 +1,57 @@
+version: 2.1
+jobs:
+  verify:
+    docker:
+      - image: node:26.13.0-bookworm
+      - image: postgres:16-alpine
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: terms-test
+          POSTGRES_DB: terms_contract_test
+    environment:
+      POSTGRES_URL: postgresql://postgres:terms-test@localhost:5432/terms_contract_test
+    steps:
+      - checkout
+      - run: npm ci --ignore-scripts
+      - run: npm run test:integration
+      - run: npm audit --audit-level=low
+  deploy:
+    parameters:
+      environment:
+        type: string
+    docker:
+      - image: cimg/python:3.13
+    environment:
+      APPNAME: terms-service-v6
+      DEPLOY_ENV: << parameters.environment >>
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: pip install boto3
+      - run: python scripts/deploy.py
+workflows:
+  build:
+    jobs:
+      - verify
+      - deploy:
+          name: deploy-dev
+          environment: DEV
+          context: org-global
+          requires: [verify]
+          filters:
+            branches:
+              only: develop
+      - approve-production:
+          type: approval
+          requires: [verify]
+          filters:
+            branches:
+              only: master
+      - deploy:
+          name: deploy-prod
+          environment: PROD
+          context: org-global
+          requires: [approve-production]
+          filters:
+            branches:
+              only: master

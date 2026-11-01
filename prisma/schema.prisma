@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model DocusignEnvelope {
+  id String @db.VarChar(255)
+  docusignTemplateId String @db.VarChar(255)
+  userId BigInt
+  isCompleted BigInt
+  @@id([id])
+  @@map("DocusignEnvelope")
+}
+
+model TermsForResource {
+  id String @db.VarChar(255)
+  reference String @db.VarChar(255)
+  referenceId String @db.VarChar(255)
+  tag String @db.VarChar(255)
+  termsOfUseIds String[] @db.Uuid
+  created DateTime @db.Timestamptz(6)
+  createdBy String @db.VarChar(255)
+  updated DateTime? @db.Timestamptz(6)
+  updatedBy String? @db.VarChar(255)
+  @@id([id])
+  @@map("TermsForResource")
+}
+
+model TermsOfUse {
+  id String @db.Uuid @default(uuid())
+  legacyId BigInt? @unique
+  text String? @db.Text
+  typeId BigInt
+  title String @db.VarChar(255)
+  url String? @db.VarChar(255)
+  agreeabilityTypeId String @db.Uuid @default("2c78f834-61f4-11ea-bd4f-3c15c2e2c206")
+  created DateTime @db.Timestamptz(6)
+  createdBy String? @db.VarChar(255)
+  updated DateTime? @db.Timestamptz(6)
+  updatedBy String? @db.VarChar(255)
+  deletedAt DateTime? @db.Timestamptz(6)
+  @@id([id])
+  @@map("TermsOfUse")
+}
+
+model TermsOfUseAgreeabilityType {
+  id String @db.Uuid @default(uuid())
+  legacyId BigInt? @unique
+  name String @db.VarChar(255)
+  description String @db.VarChar(255)
+  @@id([id])
+  @@map("TermsOfUseAgreeabilityType")
+}
+
+model TermsOfUseDependency {
+  dependencyTermsOfUseId String @db.Uuid
+  dependentTermsOfUseId String @db.Uuid
+  @@id([dependencyTermsOfUseId, dependentTermsOfUseId])
+  @@map("TermsOfUseDependency")
+}
+
+model TermsOfUseDocusignTemplateXref {
+  termsOfUseId String @db.Uuid
+  docusignTemplateId String @db.VarChar(255)
+  @@id([termsOfUseId])
+  @@map("TermsOfUseDocusignTemplateXref")
+}
+
+model TermsOfUseType {
+  id BigInt
+  name String? @db.VarChar(255)
+  @@id([id])
+  @@map("TermsOfUseType")
+}
+
+model UserTermsOfUseBanXref {
+  userId BigInt
+  termsOfUseId String @db.Uuid
+  created DateTime @db.Timestamptz(6)
+  @@id([userId, termsOfUseId])
+  @@map("UserTermsOfUseBanXref")
+}
+
+model UserTermsOfUseXref {
+  userId BigInt
+  termsOfUseId String @db.Uuid
+  created DateTime @db.Timestamptz(6)
+  @@id([userId, termsOfUseId])
+  @@map("UserTermsOfUseXref")
+}

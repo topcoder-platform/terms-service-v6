@@ -1,0 +1,42 @@
+{
+  "name": "terms-service-v6",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26.13.0 <27"
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "build": "npm run generate && tsc",
+    "start": "node dist/main.js",
+    "dev": "tsx watch src/main.ts",
+    "test": "npm run build && tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "test:integration": "node test/setup-db.mjs && TERMS_TEST_DATABASE=1 npm test"
+  },
+  "dependencies": {
+    "@nestjs/core": "12.3.2",
+    "@nestjs/common": "12.3.2",
+    "@nestjs/platform-express": "12.3.2",
+    "@prisma/client": "7.10.1",
+    "@prisma/adapter-pg": "7.10.1",
+    "pg": "8.23.1",
+    "jose": "6.2.15",
+    "rxjs": "7.8.2",
+    "reflect-metadata": "0.2.2",
+    "swagger-ui-express": "5.0.1",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "prisma": "7.10.1",
+    "@types/node": "26.6.6",
+    "@types/express": "5.0.6",
+    "@types/pg": "8.23.1",
+    "tsx": "4.23.15",
+    "supertest": "7.3.1",
+    "@types/supertest": "7.2.1",
+    "@types/swagger-ui-express": "4.1.8"
+  }
+}
