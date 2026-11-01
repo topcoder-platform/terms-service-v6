@@ -28,7 +28,10 @@ jobs:
       - checkout
       - setup_remote_docker
       - run: pip install boto3
-      - run: python scripts/deploy.py
+      - run:
+          name: Scan image and deploy to existing ECS service
+          no_output_timeout: 25m
+          command: python scripts/deploy.py
 workflows:
   build:
     jobs:

@@ -58,7 +58,11 @@ def deploy():
             pass
     deadline = time.monotonic() + 900
     while time.monotonic() < deadline:
-        scan = ecr.describe_image_scan_findings(repositoryName=settings['repository'], imageId={'imageDigest': digest})
+        try:
+            scan = ecr.describe_image_scan_findings(repositoryName=settings['repository'], imageId={'imageDigest': digest})
+        except ecr.exceptions.ScanNotFoundException:
+            time.sleep(15)
+            continue
         status = scan.get('imageScanStatus', {}).get('status')
         if status == 'COMPLETE' or (status == 'ACTIVE' and scan.get('imageScanFindings', {}).get('imageScanCompletedAt')):
             counts = scan['imageScanFindings'].get('findingSeverityCounts', {})
@@ -83,6 +87,7 @@ def deploy():
                 raise RuntimeError('Every application parameter must be SecureString')
     fields = set(ecs.meta.service_model.operation_model('RegisterTaskDefinition').input_shape.members)
     new = ecs.register_task_definition(**{k: v for k, v in task.items() if k in fields})['taskDefinition']['taskDefinitionArn']
+    print(f'Registered {new}; waiting for ECS rollout', flush=True)
     ecs.update_service(cluster=settings['cluster'], service=settings['service'], taskDefinition=new)
     ecs.get_waiter('services_stable').wait(cluster=settings['cluster'], services=[settings['service']], WaiterConfig={'Delay': 15, 'MaxAttempts': 80})
     current = ecs.describe_services(cluster=settings['cluster'], services=[settings['service']])['services'][0]
