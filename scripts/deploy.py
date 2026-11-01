@@ -77,6 +77,10 @@ def deploy():
     # Preserve networking, roles, resources, log configuration, and SSM bindings.
     container = next(c for c in task['containerDefinitions'] if c['name'] == settings['container'])
     container['image'] = f"{repo['repositoryUri']}@{digest}"
+    container['healthCheck'] = {
+        'command': ['CMD', 'node', '-e', "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+(process.env.BASE_PATH||'/v5')+'/terms/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"],
+        'interval': 30, 'timeout': 10, 'retries': 3, 'startPeriod': 30
+    }
     for definition in task['containerDefinitions']:
         if definition.get('environment'):
             raise RuntimeError('Application configuration must use SSM secrets')

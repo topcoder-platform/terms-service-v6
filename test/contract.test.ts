@@ -21,7 +21,7 @@ test('public health, authentication, optional auth and fallback contracts', asyn
   await request(http).get('/v5/terms/health').expect(200, { message: 'The service is up.' });
   await request(http).post('/v5/terms').send({}).expect(401, { message: 'No token provided.' });
   await request(http).post('/v5/terms').set('Authorization', `Bearer ${await token({ roles: ['Member'] })}`).send({}).expect(403, { message: 'You are not allowed to perform this action!' });
-  await request(http).get('/v5/terms/types').set('Authorization', 'Bearer broken').expect(401, { message: 'Failed to authenticate token.' });
+  await request(http).get('/v5/terms/types').set('Authorization', 'Bearer broken').expect(401, { message: 'Invalid Token.' });
   await request(http).get('/missing').expect(404, { message: 'The requested resource cannot be found.' });
   await request(http).put('/v5/terms').expect(405, { message: 'The requested HTTP method is not supported.' });
   await request(http).get('/v5/terms/123').set('Authorization', 'Bearer broken').expect(401);

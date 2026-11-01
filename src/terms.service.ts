@@ -5,7 +5,7 @@ import { Database, clear, wire } from './database.js';
 import { Integrations } from './integrations.js';
 import { ApiError, badRequest, notFound } from './errors.js';
 import { config } from './config.js';
-import type { Prisma } from './generated/prisma/client.js';
+import { Prisma } from './generated/prisma/client.js';
 
 export type User = { userId?: number; handle?: string; sub?: string; email?: string; roles?: string[]; scopes?: string[]; isMachine?: boolean };
 export type Input = Record<string, any>;
@@ -43,8 +43,8 @@ export class TermsService {
     return this.decorate(await this.term(id), { text: true, userId, throwMissing: true });
   }
   async searchTermsOfUses(query: Input) {
-    const page = Number(query.page) > 0 ? Number(query.page) : 1;
-    const perPage = Number(query.perPage) > 0 ? Number(query.perPage) : 20;
+    const page = Number(query.page) > 0 ? query.page : 1;
+    const perPage = Number(query.perPage) > 0 ? query.perPage : 20;
     const where: Prisma.TermsOfUseWhereInput = { deletedAt: null };
     if (query.legacyId) where.legacyId = BigInt(query.legacyId);
     if (query.title) where.title = { contains: query.title, mode: 'insensitive' };
@@ -53,7 +53,7 @@ export class TermsService {
       where.id = { in: agreements.map(x => x.termsOfUseId) };
     }
     const total = await this.db.termsOfUse.count({ where });
-    const rows = await this.db.termsOfUse.findMany({ where, orderBy: { id: 'asc' }, skip: (page - 1) * perPage, take: perPage });
+    const rows = await this.db.termsOfUse.findMany({ where, orderBy: { id: 'asc' }, skip: (page - 1) * perPage, take: Number(perPage) });
     return { total, page, perPage, result: await Promise.all(rows.map(term => this.decorate(term, { type: true }))) };
   }
   async agreeTermsOfUse(user: User, id: string) {
@@ -120,13 +120,20 @@ export class TermsService {
   }
   async getTermsOfUseUsers(id: string, query: Input) {
     await this.term(id);
-    const page = Number(query.page) > 0 ? Number(query.page) : 1;
-    const perPage = Number(query.perPage) > 0 ? Number(query.perPage) : 20;
+    const page = Number(query.page) > 0 ? query.page : 1;
+    const perPage = Number(query.perPage) > 0 ? query.perPage : 20;
     const where: Prisma.UserTermsOfUseXrefWhereInput = { termsOfUseId: id };
     if (query.userId) where.userId = { in: query.userId.split(',').map((v: string) => BigInt(v.trim())) };
     if (query.signedAtFrom || query.signedAtTo) where.created = { ...(query.signedAtFrom ? { gte: new Date(query.signedAtFrom) } : {}), ...(query.signedAtTo ? { lte: new Date(query.signedAtTo) } : {}) };
     const total = await this.db.userTermsOfUseXref.count({ where });
-    const users = await this.db.userTermsOfUseXref.findMany({ where, take: perPage, skip: (page - 1) * perPage, select: { userId: true } });
+    // Sequelize leaves this endpoint unordered. Prisma pagination implicitly orders by
+    // the primary key, changing which users appear on each existing page.
+    const table = Prisma.raw('"' + config.DB_SCHEMA_NAME.replace(/"/g, '""') + '"."UserTermsOfUseXref"');
+    const clauses = [Prisma.sql`"termsOfUseId" = ${id}::uuid`];
+    if (query.userId) clauses.push(Prisma.sql`"userId" IN (${Prisma.join(query.userId.split(',').map((v: string) => BigInt(v.trim())))})`);
+    if (query.signedAtFrom) clauses.push(Prisma.sql`"created" >= ${new Date(query.signedAtFrom)}`);
+    if (query.signedAtTo) clauses.push(Prisma.sql`"created" <= ${new Date(query.signedAtTo)}`);
+    const users = await this.db.$queryRaw<{ userId: bigint }[]>(Prisma.sql`SELECT "userId" FROM ${table} WHERE ${Prisma.join(clauses, ' AND ')} LIMIT ${Number(perPage)} OFFSET ${(page - 1) * perPage}`);
     return { total, page, perPage, result: users.map(x => Number(x.userId)) };
   }
   async getTermsOfUseTypes() { return wire(await this.db.termsOfUseType.findMany()); }
@@ -169,10 +176,10 @@ export class TermsService {
     await this.events.postEvent(config.RESOURCE_TERMS_DELETE_TOPIC, existing);
   }
   async searchTermsForResources(query: Input) {
-    const page = query.page === undefined ? undefined : Number(query.page);
-    const perPage = query.perPage === undefined ? undefined : Number(query.perPage);
+    const page = query.page;
+    const perPage = query.perPage;
     const total = await this.db.termsForResource.count();
-    const rows = await this.db.termsForResource.findMany({ orderBy: { created: 'desc' }, ...(perPage === undefined ? {} : { take: perPage }), ...(page && perPage ? { skip: (page - 1) * perPage } : {}) });
+    const rows = await this.db.termsForResource.findMany({ orderBy: { created: 'desc' }, ...(perPage === undefined ? {} : { take: Number(perPage) }), ...(page && perPage ? { skip: (page - 1) * perPage } : {}) });
     return { total, page, perPage, result: rows.map(clear) };
   }
   async checkTermsForResourceOfUser(userId: string, query: Input) {

@@ -18,9 +18,10 @@ export class AuthGuard implements CanActivate {
     let payload: Record<string, any>;
     try {
       const issuers: string[] = JSON.parse(config.VALID_ISSUERS);
-      const decoded = decodeJwt(token[1]);
+      let decoded, algorithm;
+      try { decoded = decodeJwt(token[1]); algorithm = decodeProtectedHeader(token[1]).alg; }
+      catch { throw new ApiError(401, 'Invalid Token.'); }
       if (!issuers.includes(decoded.iss!)) throw new ApiError(401, 'Invalid token issuer.');
-      const algorithm = decodeProtectedHeader(token[1]).alg;
       if (algorithm === 'HS256') payload = (await jwtVerify(token[1], new TextEncoder().encode(config.AUTH_SECRET), { algorithms: ['HS256'], issuer: issuers })).payload;
       else if (algorithm === 'RS256') {
         if (!this.keys.has(decoded.iss!)) this.keys.set(decoded.iss!, createRemoteJWKSet(new URL(`${decoded.iss}.well-known/jwks.json`)));
