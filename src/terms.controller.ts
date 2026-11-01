@@ -4,6 +4,7 @@ import { TermsService } from './terms.service.js';
 import { DocusignService } from './docusign.service.js';
 import { Access, AuthGuard } from './auth.js';
 import { pagination } from './pagination.js';
+import { sendJson } from './json-response.js';
 import { config } from './config.js';
 @Controller(config.BASE_PATH)
 @UseGuards(AuthGuard)
@@ -18,8 +19,8 @@ export class TermsController {
  @Post('/terms/reference')
  @HttpCode(200)
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async createTermsForResource(@Req() req: any) {
-  return await this.terms.createTermsForResource(req.authUser, req.body)
+ async createTermsForResource(@Req() req: any, @Res() res: Response) {
+  sendJson(res, await this.terms.createTermsForResource(req.authUser, req.body))
  }
  @Get('/terms/reference')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["read:terms"]})
