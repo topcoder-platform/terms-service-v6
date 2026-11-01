@@ -24,7 +24,7 @@ def session():
         segment = token.split('.')[1]
         claims = json.loads(base64.urlsafe_b64decode(segment + '=' * (-len(segment) % 4)))
         def claim(suffix):
-            return next(value for key, value in claims.items() if key.endswith(suffix))
+            return next(value for key, value in claims.items() if suffix in key)
         return boto3.Session(aws_access_key_id=claim('AWS_ACCESS_KEY'), aws_secret_access_key=claim('AWS_SECRET_KEY'), aws_session_token=claim('AWS_SESSION_TOKEN'), region_name=os.getenv('AWS_REGION', 'us-east-1'))
     return boto3.Session(region_name=os.getenv('AWS_REGION', 'us-east-1'))
 

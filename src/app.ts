@@ -15,7 +15,7 @@ import YAML from 'yaml';
 import { readFileSync } from 'node:fs';
 @Controller()
 class HealthController {
-  @All(`${config.BASE_PATH}/terms/health`) health() { return { message: 'The service is up.' }; }
+  @All([`${config.BASE_PATH}/terms/health`, `${config.BASE_PATH}/terms/health/{*rest}`]) health() { return { message: 'The service is up.' }; }
 }
 @Module({ controllers: [HealthController, TermsController, FallbackController], providers: [Database, Integrations, TermsService, DocusignService, AuthGuard] })
 export class AppModule {}

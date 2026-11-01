@@ -12,119 +12,121 @@ export class TermsController {
  @Post('/terms/docusignViewURL')
  @HttpCode(200)
  @Access({"auth":"jwt"})
- async generateDocusignViewURL(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.docusign.generateDocusignViewURL(req.authUser, req.body))
+ async generateDocusignViewURL(@Req() req: any) {
+  return await this.docusign.generateDocusignViewURL(req.authUser, req.body)
  }
  @Post('/terms/reference')
  @HttpCode(200)
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async createTermsForResource(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.createTermsForResource(req.authUser, req.body))
+ async createTermsForResource(@Req() req: any) {
+  return await this.terms.createTermsForResource(req.authUser, req.body)
  }
  @Get('/terms/reference')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["read:terms"]})
- async searchTermsForResources(@Req() req: any, @Res() res: Response) {
+ async searchTermsForResources(@Req() req: any, @Res({ passthrough: true }) res: Response) {
   const result = await this.terms.searchTermsForResources(req.query)
   pagination(req, res, result)
-  res.type('application/json').json({ result: result.result })
+  return { result: result.result }
  }
  @Get('/terms/types')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["read:terms"]})
- async getTermsOfUseTypes(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.getTermsOfUseTypes())
+ async getTermsOfUseTypes(@Req() req: any) {
+  return await this.terms.getTermsOfUseTypes()
  }
  @Get('/terms/agreeability-types')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["read:terms"]})
- async getTermsOfUseAgreeabilityTypes(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.getTermsOfUseAgreeabilityTypes())
+ async getTermsOfUseAgreeabilityTypes(@Req() req: any) {
+  return await this.terms.getTermsOfUseAgreeabilityTypes()
  }
  @Get('/terms/agreeability-types/:id')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["read:terms"]})
- async getTermsOfUseAgreeabilityType(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.getTermsOfUseAgreeabilityType(req.params.id))
+ async getTermsOfUseAgreeabilityType(@Req() req: any) {
+  return await this.terms.getTermsOfUseAgreeabilityType(req.params.id)
  }
  @Post('/terms')
  @HttpCode(200)
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async createTermsOfUse(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.createTermsOfUse(req.authUser, req.body))
+ async createTermsOfUse(@Req() req: any) {
+  return await this.terms.createTermsOfUse(req.authUser, req.body)
  }
  @Get('/terms')
  @Access({})
- async searchTermsOfUses(@Req() req: any, @Res() res: Response) {
+ async searchTermsOfUses(@Req() req: any, @Res({ passthrough: true }) res: Response) {
   const result = await this.terms.searchTermsOfUses(req.query)
   pagination(req, res, result)
-  res.type('application/json').json({ result: result.result })
+  return { result: result.result }
  }
  @Get('/terms/:termsOfUseId')
  @Access({"optionalAuth":"jwt","scopes":["read:terms"]})
- async getTermsOfUse(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.getTermsOfUse(req.authUser, req.params.termsOfUseId, req.query))
+ async getTermsOfUse(@Req() req: any) {
+  return await this.terms.getTermsOfUse(req.authUser, req.params.termsOfUseId, req.query)
  }
  @Put('/terms/:termsOfUseId')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async fullyUpdateTermsOfUse(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.updateTermsOfUse(req.authUser, req.params.termsOfUseId, req.body, true))
+ async fullyUpdateTermsOfUse(@Req() req: any) {
+  return await this.terms.updateTermsOfUse(req.authUser, req.params.termsOfUseId, req.body, true)
  }
  @Patch('/terms/:termsOfUseId')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async partiallyUpdateTermsOfUse(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.updateTermsOfUse(req.authUser, req.params.termsOfUseId, req.body, false))
+ async partiallyUpdateTermsOfUse(@Req() req: any) {
+  return await this.terms.updateTermsOfUse(req.authUser, req.params.termsOfUseId, req.body, false)
  }
  @Delete('/terms/:termsOfUseId')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async deleteTermsOfUse(@Req() req: any, @Res() res: Response) {
+ @HttpCode(204)
+ async deleteTermsOfUse(@Req() req: any) {
   await this.terms.deleteTermsOfUse(req.params.termsOfUseId)
-  res.status(204).end()
+
  }
  @Post('/terms/:termsOfUseId/agree')
  @HttpCode(200)
  @Access({"auth":"jwt"})
- async agreeTermsOfUse(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.agreeTermsOfUse(req.authUser, req.params.termsOfUseId))
+ async agreeTermsOfUse(@Req() req: any) {
+  return await this.terms.agreeTermsOfUse(req.authUser, req.params.termsOfUseId)
  }
  @Get('/terms/reference/:termsForResourceId')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["read:terms"]})
- async getTermsForResource(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.getTermsForResource(req.params.termsForResourceId))
+ async getTermsForResource(@Req() req: any) {
+  return await this.terms.getTermsForResource(req.params.termsForResourceId)
  }
  @Put('/terms/reference/:termsForResourceId')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async fullyUpdateTermsForResource(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.updateTermsForResource(req.authUser, req.params.termsForResourceId, req.body))
+ async fullyUpdateTermsForResource(@Req() req: any) {
+  return await this.terms.updateTermsForResource(req.authUser, req.params.termsForResourceId, req.body)
  }
  @Patch('/terms/reference/:termsForResourceId')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async partiallyUpdateTermsForResource(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.updateTermsForResource(req.authUser, req.params.termsForResourceId, req.body))
+ async partiallyUpdateTermsForResource(@Req() req: any) {
+  return await this.terms.updateTermsForResource(req.authUser, req.params.termsForResourceId, req.body)
  }
  @Delete('/terms/reference/:termsForResourceId')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async deleteTermsForResource(@Req() req: any, @Res() res: Response) {
+ @HttpCode(204)
+ async deleteTermsForResource(@Req() req: any) {
   await this.terms.deleteTermsForResource(req.params.termsForResourceId)
-  res.status(204).end()
+
  }
  @Get('/terms/user/:userId/reference')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["read:terms"]})
- async checkTermsForResourceOfUser(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.checkTermsForResourceOfUser(req.params.userId, req.query))
+ async checkTermsForResourceOfUser(@Req() req: any) {
+  return await this.terms.checkTermsForResourceOfUser(req.params.userId, req.query)
  }
  @Get('/terms/:termsOfUseId/users')
  @Access({"auth":"jwt","access":["Administrator","tgadmin"],"scopes":["read:terms"]})
- async getTermsOfUseUsers(@Req() req: any, @Res() res: Response) {
+ async getTermsOfUseUsers(@Req() req: any, @Res({ passthrough: true }) res: Response) {
   const result = await this.terms.getTermsOfUseUsers(req.params.termsOfUseId, req.query)
   pagination(req, res, result)
-  res.type('application/json').json({ result: result.result })
+  return { result: result.result }
  }
  @Post('/terms/:termsOfUseId/users')
  @HttpCode(200)
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async signTermsOfUseUser(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.agreeTermsOfUse(req.body, req.params.termsOfUseId))
+ async signTermsOfUseUser(@Req() req: any) {
+  return await this.terms.agreeTermsOfUse(req.body, req.params.termsOfUseId)
  }
  @Delete('/terms/:termsOfUseId/users/:userId')
  @Access({"auth":"jwt","access":["Administrator"],"scopes":["write:terms"]})
- async unsignTermsOfUseUser(@Req() req: any, @Res() res: Response) {
-  res.type('application/json').json(await this.terms.unsignTermsOfUseUser(req.params.termsOfUseId, req.params.userId))
+ async unsignTermsOfUseUser(@Req() req: any) {
+  return await this.terms.unsignTermsOfUseUser(req.params.termsOfUseId, req.params.userId)
  }
 }
