@@ -44,12 +44,20 @@ def deploy():
     repo = ecr.describe_repositories(repositoryNames=[settings['repository']])['repositories'][0]
     tag = os.environ.get('CIRCLE_SHA1') or subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     image = f"{repo['repositoryUri']}:{tag}"
-    auth = ecr.get_authorization_token()['authorizationData'][0]
-    username, password = base64.b64decode(auth['authorizationToken']).decode().split(':', 1)
-    subprocess.run(['docker', 'login', '--username', username, '--password-stdin', auth['proxyEndpoint']], input=password, text=True, check=True)
-    subprocess.run(['docker', 'build', '--pull', '--provenance=false', '-t', image, '.'], check=True)
-    subprocess.run(['docker', 'push', image], check=True)
-    digest = ecr.describe_images(repositoryName=settings['repository'], imageIds=[{'imageTag': tag}])['imageDetails'][0]['imageDigest']
+    try:
+        existing_image = ecr.describe_images(repositoryName=settings['repository'], imageIds=[{'imageTag': tag}])['imageDetails'][0]
+    except ecr.exceptions.ImageNotFoundException:
+        existing_image = None
+    if existing_image:
+        digest = existing_image['imageDigest']
+        print(f'Reusing immutable image {image}', flush=True)
+    else:
+        auth = ecr.get_authorization_token()['authorizationData'][0]
+        username, password = base64.b64decode(auth['authorizationToken']).decode().split(':', 1)
+        subprocess.run(['docker', 'login', '--username', username, '--password-stdin', auth['proxyEndpoint']], input=password, text=True, check=True)
+        subprocess.run(['docker', 'build', '--pull', '--provenance=false', '-t', image, '.'], check=True)
+        subprocess.run(['docker', 'push', image], check=True)
+        digest = ecr.describe_images(repositoryName=settings['repository'], imageIds=[{'imageTag': tag}])['imageDetails'][0]['imageDigest']
     scan_type = ecr.get_registry_scanning_configuration()['scanningConfiguration']['scanType']
     if scan_type == 'BASIC':
         try:
@@ -76,6 +84,7 @@ def deploy():
         raise TimeoutError('ECR scan did not complete')
     # Preserve networking, roles, resources, log configuration, and SSM bindings.
     container = next(c for c in task['containerDefinitions'] if c['name'] == settings['container'])
+    previous_image, previous_health = container['image'], container.get('healthCheck')
     container['image'] = f"{repo['repositoryUri']}@{digest}"
     container['healthCheck'] = {
         'command': ['CMD', 'node', '-e', "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+(process.env.BASE_PATH||'/v5')+'/terms/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"],
@@ -89,10 +98,14 @@ def deploy():
             result = aws.client('ssm').get_parameters(Names=names)
             if result.get('InvalidParameters') or any(p['Type'] != 'SecureString' for p in result['Parameters']):
                 raise RuntimeError('Every application parameter must be SecureString')
-    fields = set(ecs.meta.service_model.operation_model('RegisterTaskDefinition').input_shape.members)
-    new = ecs.register_task_definition(**{k: v for k, v in task.items() if k in fields})['taskDefinition']['taskDefinitionArn']
-    print(f'Registered {new}; waiting for ECS rollout', flush=True)
-    ecs.update_service(cluster=settings['cluster'], service=settings['service'], taskDefinition=new)
+    if previous_image == container['image'] and previous_health == container['healthCheck']:
+        new = service['taskDefinition']
+        print(f'Existing task already uses the verified image: {new}', flush=True)
+    else:
+        fields = set(ecs.meta.service_model.operation_model('RegisterTaskDefinition').input_shape.members)
+        new = ecs.register_task_definition(**{k: v for k, v in task.items() if k in fields})['taskDefinition']['taskDefinitionArn']
+        print(f'Registered {new}; waiting for ECS rollout', flush=True)
+        ecs.update_service(cluster=settings['cluster'], service=settings['service'], taskDefinition=new)
     ecs.get_waiter('services_stable').wait(cluster=settings['cluster'], services=[settings['service']], WaiterConfig={'Delay': 15, 'MaxAttempts': 80})
     current = ecs.describe_services(cluster=settings['cluster'], services=[settings['service']])['services'][0]
     if current['taskDefinition'] != new or current['runningCount'] != current['desiredCount']:
