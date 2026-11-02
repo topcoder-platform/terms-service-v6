@@ -11,7 +11,7 @@
     "build": "npm run generate && tsc",
     "start": "node dist/main.js",
     "dev": "tsx watch src/main.ts",
-    "test": "npm run build && tsx --test test/*.test.ts",
+    "test": "npm run build && AUTH_SECRET=terms-contract-tests-only-32-byte-secret tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "test:integration": "node test/setup-db.mjs && TERMS_TEST_DATABASE=1 npm test"
   },
@@ -26,7 +26,8 @@
     "rxjs": "7.8.2",
     "reflect-metadata": "0.2.2",
     "swagger-ui-express": "5.0.1",
-    "yaml": "2.9.1"
+    "yaml": "2.9.1",
+    "tc-core-library-js": "github:topcoder-platform/tc-core-library-js#v4.0.0-rc.1"
   },
   "devDependencies": {
     "typescript": "7.0.2",

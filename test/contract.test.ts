@@ -25,7 +25,7 @@ test('public health, authentication, optional auth and fallback contracts', asyn
   await request(http).get('/missing').expect(404, { message: 'The requested resource cannot be found.' });
   await request(http).put('/v5/terms').expect(405, { message: 'The requested HTTP method is not supported.' });
   await request(http).get('/v5/terms/123').set('Authorization', 'Bearer broken').expect(401);
-  await request(http).post('/v5/terms/docusignViewURL').set('Authorization', `Bearer ${await token({ userId: undefined, roles: undefined, scope: 'write:terms', gty: 'client-credentials', azp: 'test' })}`).send({}).expect(403);
+  await request(http).post('/v5/terms/docusignViewURL').set('Authorization', `Bearer ${await token({ userId: undefined, roles: undefined, scope: 'write:terms', gty: 'client-credentials', azp: 'test' })}`).send({}).expect(401);
 });
 test('pagination response preserves result envelope and headers', async () => {
   const service = app.get(TermsService);

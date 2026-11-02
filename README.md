@@ -17,3 +17,7 @@ GitHub runs CodeQL with extended security queries and Dependabot checks npm, Doc
 The deployment uses a Node-based container health check, so the runtime image does not need curl. Re-running a commit reuses its immutable, scanned ECR image; an already-current ECS task is left in place. A new commit builds and scans a new image before updating the task. Application parameters live under `/config/terms-service-v6/appvar/`.
 
 Compatibility includes the legacy numeric-string pagination headers and the existing database ordering of signed users. DocuSign return URLs interpolate `envelopeId` without evaluating caller-provided JavaScript.
+
+Shared M2M token acquisition, caching, and Bus API publishing use `tc-core-library-js` pinned to `v4.0.0-rc.1`. Event envelopes and best-effort publication behavior are preserved.
+
+JWT verification also uses the shared library. Legacy HS256 human tokens require an `AUTH_SECRET` of at least 32 bytes. RSA machine tokens must match `AUTH0_AUDIENCE`; configure `JWT_AUDIENCE` for additional browser/application audiences. Tokens require expiration, and conflicting identity claims are rejected. Route roles/scopes and existing HTTP error envelopes remain service-owned. The test command supplies a test-only signing secret.
