@@ -21,3 +21,7 @@ Compatibility includes the legacy numeric-string pagination headers and the exis
 Shared M2M token acquisition, caching, and Bus API publishing use `tc-core-library-js` pinned to `v4.0.0-rc.1`. Event envelopes and best-effort publication behavior are preserved.
 
 JWT verification also uses the shared library. Legacy HS256 human tokens require an `AUTH_SECRET` of at least 32 bytes. RSA machine tokens must match `AUTH0_AUDIENCE`; set `JWT_AUDIENCE` to the trusted website/browser client audience as well as the M2M audience in `AUTH0_AUDIENCE`. Bind `/config/terms-service-v6/appvar/JWT_AUDIENCE` as a SecureString in the ECS task; use the same environment-specific browser audience as the website and Identity API. Deployments reject a missing or empty browser audience binding. Tokens require expiration, and conflicting identity claims are rejected. Route roles/scopes and existing HTTP error envelopes remain service-owned. The test command supplies a test-only signing secret.
+
+### Shared JWT denylists
+
+Core `v4.0.0-rc.2` rejects authenticated JWTs whose subject or normalized user ID matches `ACCESS_CONTROL_BLOCKED_SUBJECTS` or `ACCESS_CONTROL_BLOCKED_USER_IDS`. Deployment binds both names to SecureStrings under `/config/common/global-appvar/`. Values are comma-separated exact identifiers. Replace ECS tasks after changing either parameter; existing verifier instances do not reload them.

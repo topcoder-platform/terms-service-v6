@@ -29,6 +29,14 @@ def session():
     return boto3.Session(region_name=os.getenv('AWS_REGION', 'us-east-1'))
 
 
+def bind_global_denylists(container):
+    """Use shared denylist parameters, replacing stale service-local bindings."""
+    names = ('ACCESS_CONTROL_BLOCKED_SUBJECTS', 'ACCESS_CONTROL_BLOCKED_USER_IDS')
+    container['secrets'] = [s for s in container.get('secrets', []) if s['name'] not in names] + [
+        {'name': name, 'valueFrom': '/config/common/global-appvar/' + name} for name in names
+    ]
+
+
 def deploy():
     aws = session()
     app = os.environ['APPNAME']
@@ -94,6 +102,8 @@ def deploy():
     # Preserve networking, roles, resources, log configuration, and SSM bindings.
     container = next(c for c in task['containerDefinitions'] if c['name'] == settings['container'])
     previous_image, previous_health = container['image'], container.get('healthCheck')
+    previous_secrets = list(container.get('secrets', []))
+    bind_global_denylists(container)
     container['image'] = f"{repo['repositoryUri']}@{digest}"
     container['healthCheck'] = {
         'command': ['CMD', 'node', '-e', "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+(process.env.BASE_PATH||'/v5')+'/terms/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"],
@@ -107,7 +117,7 @@ def deploy():
             result = aws.client('ssm').get_parameters(Names=names)
             if result.get('InvalidParameters') or any(p['Type'] != 'SecureString' for p in result['Parameters']):
                 raise RuntimeError('Every application parameter must be SecureString')
-    if previous_image == container['image'] and previous_health == container['healthCheck']:
+    if previous_image == container['image'] and previous_health == container['healthCheck'] and previous_secrets == container['secrets']:
         new = service['taskDefinition']
         print(f'Existing task already uses the verified image: {new}', flush=True)
     else:
