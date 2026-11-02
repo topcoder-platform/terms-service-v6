@@ -11,3 +11,7 @@ In ECS, every configuration setting is injected through a Parameter Store `Secur
 CircleCI verifies contracts and dependencies before deploying `develop` to dev and `master` to production after a manual approval, using the existing `org-global` credential broker. `/config/terms-service-v6/deployvar` must be a SecureString containing JSON keys `cluster`, `service`, `repository`, and `container`. The deployment script requires those resources to exist: it pushes a commit-tagged ECR image, requires zero critical/high/medium scan findings, registers a revision of the current ECS task, and waits for the existing service to stabilize. It does not create clusters, services, repositories, load balancers, or databases. A rolled-back deployment fails the job.
 
 GitHub runs CodeQL with extended security queries and Dependabot checks npm, Docker, and Actions dependencies. Runtime configuration retains legacy names so existing secret values can be reused.
+
+The deployment uses a Node-based container health check, so the runtime image does not need curl. Re-running a commit reuses its immutable, scanned ECR image; an already-current ECS task is left in place. A new commit builds and scans a new image before updating the task. Application parameters live under `/config/terms-service-v6/appvar/`.
+
+Compatibility includes the legacy numeric-string pagination headers and the existing database ordering of signed users. DocuSign return URLs interpolate `envelopeId` without evaluating caller-provided JavaScript.
