@@ -8,7 +8,9 @@ Set `POSTGRES_URL` and `DB_SCHEMA_NAME` to the existing database and schema. `sr
 
 In ECS, every configuration setting is injected through a Parameter Store `SecureString` reference in the task definition. Credentials and configuration are not baked into the image. The app runs as an unprivileged user.
 
-CircleCI verifies contracts and dependencies before deploying `develop` to dev and `master` to production after a manual approval, using the existing `org-global` credential broker. `/config/terms-service-v6/deployvar` must be a SecureString containing JSON keys `cluster`, `service`, `repository`, and `container`. The deployment script requires those resources to exist: it pushes a commit-tagged ECR image, requires zero critical/high/medium scan findings, registers a revision of the current ECS task, and waits for the existing service to stabilize. It does not create clusters, services, repositories, load balancers, or databases. A rolled-back deployment fails the job.
+CircleCI verifies contracts and dependencies before deploying `develop` to dev and `master` to production automatically after verification passes, using the existing `org-global` credential broker. `/config/terms-service-v6/deployvar` must be a SecureString containing JSON keys `cluster`, `service`, `repository`, and `container`. The deployment script requires those resources to exist: it pushes a commit-tagged ECR image, requires zero critical/high/medium scan findings, registers a revision of the current ECS task, and waits for the existing service to stabilize. It does not create clusters, services, repositories, load balancers, or databases. A rolled-back deployment fails the job.
+
+Production approval happens in GitHub when the PR from `develop` to `master` is reviewed and merged. CircleCI has no separate approval job.
 
 GitHub runs CodeQL with extended security queries and Dependabot checks npm, Docker, and Actions dependencies. Runtime configuration retains legacy names so existing secret values can be reused.
 

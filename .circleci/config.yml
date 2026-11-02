@@ -45,18 +45,12 @@ workflows:
           filters:
             branches:
               only: develop
-      - approve-production:
-          type: approval
-          requires: [verify]
-          filters:
-            branches:
-              only: master
       - deploy:
           name: deploy-prod
           serial-group: << pipeline.project.slug >>/deploy-prod
           environment: PROD
           context: org-global
-          requires: [approve-production]
+          requires: [verify]
           filters:
             branches:
               only: master
