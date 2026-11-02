@@ -41,6 +41,15 @@ def deploy():
     if service['status'] != 'ACTIVE':
         raise RuntimeError('Expected an existing active ECS service')
     task = ecs.describe_task_definition(taskDefinition=service['taskDefinition'])['taskDefinition']
+    # Terms detail is used by signed-in browsers as well as M2M callers.
+    # The shared verifier needs both audiences; fail before deploying an incomplete task.
+    application = next(c for c in task['containerDefinitions'] if c['name'] == settings['container'])
+    browser_audience = next((s for s in application.get('secrets', []) if s['name'] == 'JWT_AUDIENCE'), None)
+    if not browser_audience:
+        raise RuntimeError('Bind JWT_AUDIENCE to the environment-specific browser audience SecureString before deployment')
+    audience_parameter = aws.client('ssm').get_parameter(Name=browser_audience['valueFrom'], WithDecryption=True)['Parameter']
+    if audience_parameter['Type'] != 'SecureString' or not audience_parameter['Value'].strip():
+        raise RuntimeError('JWT_AUDIENCE must be a nonempty SecureString for the trusted browser application')
     repo = ecr.describe_repositories(repositoryNames=[settings['repository']])['repositories'][0]
     tag = os.environ.get('CIRCLE_SHA1') or subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     image = f"{repo['repositoryUri']}:{tag}"
