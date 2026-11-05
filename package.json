@@ -27,7 +27,7 @@
     "reflect-metadata": "0.2.2",
     "swagger-ui-express": "5.0.1",
     "yaml": "2.9.1",
-    "tc-core-library-js": "https://codeload.github.com/topcoder-platform/tc-core-library-js/tar.gz/58de37670180e183e8378c3d203df0112a0414f6"
+    "tc-core-library-js": "https://codeload.github.com/topcoder-platform/tc-core-library-js/tar.gz/2067e74f73d7fe3442c96f375fc97f8486f79be4"
   },
   "devDependencies": {
     "typescript": "7.0.2",
