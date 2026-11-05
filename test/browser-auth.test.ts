@@ -20,6 +20,7 @@ test('terms detail accepts the configured browser audience while rejecting unrel
   const path = '/v5/terms/0a507fb7-3fe0-402b-b121-1a24af4a9cf1';
   let app: Awaited<ReturnType<typeof createApp>> | undefined;
   const sign = (audience: string, claims: Record<string, unknown> = {}) => new SignJWT({
+    emailVerified: true,
     'https://topcoder-dev.com/userId': '123',
     'https://topcoder-dev.com/handle': 'browser-member',
     'https://topcoder-dev.com/roles': ['Member'], ...claims

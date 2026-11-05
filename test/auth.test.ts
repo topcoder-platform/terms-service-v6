@@ -26,7 +26,10 @@ test('shared verifier handles legacy humans and audience-bound RSA machines with
   }
   const machine = { gty: 'client-credentials', azp: 'test-client', scope: 'read:terms', aud: config.AUTH0_AUDIENCE };
   try {
-    const human = await authenticate(await sign({ 'https://topcoder.com/userId': '123', 'https://topcoder.com/handle': 'member', 'https://topcoder.com/roles': ['Administrator'] }, false));
+    const human = await authenticate(await sign({ emailVerified: true, 'https://topcoder.com/userId': '123', 'https://topcoder.com/handle': 'member', 'https://topcoder.com/roles': ['Administrator'] }, false));
+    for (const emailVerified of [undefined, false, 'true']) {
+      await assert.rejects(authenticate(await sign({ userId: 123, roles: ['Administrator'], emailVerified }, false)), { httpStatus: 401 });
+    }
     assert.equal(human.userId, 123); assert.equal(human.handle, 'member'); assert.equal(human.isMachine, false);
     assert.equal((await authenticate(await sign(machine))).isMachine, true);
     await assert.rejects(authenticate(await sign({ ...machine, scope: 'write:terms' })), { httpStatus: 403 });
@@ -39,7 +42,7 @@ test('shared verifier handles legacy humans and audience-bound RSA machines with
     ]) await assert.rejects(authenticate(await sign(claims)), { httpStatus: 401 });
     await assert.rejects(authenticate(await sign({ userId: 123, roles: ['Administrator'] })), { httpStatus: 401 });
     await assert.rejects(authenticate(await sign(machine, false)), { httpStatus: 401 });
-    const expired = await new SignJWT({ userId: 123, roles: ['Administrator'] }).setProtectedHeader({ alg: 'HS256' }).setIssuer(issuer).setExpirationTime('0s').sign(new TextEncoder().encode(config.AUTH_SECRET));
+    const expired = await new SignJWT({ emailVerified: true, userId: 123, roles: ['Administrator'] }).setProtectedHeader({ alg: 'HS256' }).setIssuer(issuer).setExpirationTime('0s').sign(new TextEncoder().encode(config.AUTH_SECRET));
     await assert.rejects(authenticate(expired), { httpStatus: 401 });
     await assert.rejects(authenticate('broken'), { httpStatus: 401, message: 'Invalid Token.' });
     await assert.rejects(authenticate(), { httpStatus: 401, message: 'No token provided.' });

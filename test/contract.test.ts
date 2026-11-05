@@ -10,7 +10,7 @@ import { config } from '../dist/config.js';
 let app: Awaited<ReturnType<typeof createApp>>;
 let calls: { topic: string; payload: any }[] = [];
 const issuer = JSON.parse(config.VALID_ISSUERS)[0];
-async function token(claims: Record<string, unknown> = {}) { return new SignJWT({ userId: 123, handle: 'contract-user', roles: ['Administrator'], ...claims }).setProtectedHeader({ alg: 'HS256' }).setIssuer(issuer).setExpirationTime('5m').sign(new TextEncoder().encode(config.AUTH_SECRET)); }
+async function token(claims: Record<string, unknown> = {}) { return new SignJWT({ emailVerified: true, userId: 123, handle: 'contract-user', roles: ['Administrator'], ...claims }).setProtectedHeader({ alg: 'HS256' }).setIssuer(issuer).setExpirationTime('5m').sign(new TextEncoder().encode(config.AUTH_SECRET)); }
 before(async () => {
   app = await createApp();
   app.get(Integrations).postEvent = async (topic: string, payload: any) => { calls.push({ topic, payload }); return {}; };
