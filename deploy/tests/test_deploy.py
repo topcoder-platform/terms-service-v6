@@ -112,6 +112,49 @@ class DeploymentTests(unittest.TestCase):
                 r.main([str(ROOT / 'deploy/dev.json')])
             call.assert_not_called()
 
+    def test_release_updates_the_named_service_through_the_real_adapter(self):
+        old = r.d.arn(self.m, 'ecs', f'task-definition/{r.APP}:1')
+        new = r.d.arn(self.m, 'ecs', f'task-definition/{r.APP}:2')
+        service = {
+            'serviceArn': r.d.arn(self.m, 'ecs', f"service/{self.m['cluster']}/{r.APP}"),
+            'status': 'ACTIVE', 'taskDefinition': old, 'desiredCount': 1,
+            'runningCount': 1, 'pendingCount': 0,
+            'deploymentConfiguration': {'deploymentCircuitBreaker': {'enable': True, 'rollback': True}},
+            'deployments': [{'taskDefinition': old, 'rolloutState': 'COMPLETED'}],
+        }
+        registered = {}
+        aws = Mock(env={})
+        def call(api_service, operation, **kwargs):
+            self.assertEqual(api_service, 'ecs')
+            if operation == 'describe-services':
+                return {'services': [deepcopy(service)]}
+            if operation == 'describe-task-definition':
+                return {'taskDefinition': deepcopy(self.task if kwargs['taskDefinition'] == old else registered)}
+            if operation == 'register-task-definition':
+                registered.update(deepcopy(kwargs))
+                return {'taskDefinition': {'taskDefinitionArn': new}}
+            if operation == 'update-service':
+                self.assertEqual(kwargs, {'cluster': self.m['cluster'], 'service': r.APP, 'taskDefinition': new})
+                service['taskDefinition'] = new
+                service['deployments'] = [{'taskDefinition': new, 'rolloutState': 'COMPLETED'}]
+                return {'service': deepcopy(service)}
+            if operation == 'list-tasks':
+                return {'taskArns': ['running-task']}
+            if operation == 'describe-tasks':
+                return {'tasks': [{'taskDefinitionArn': new, 'lastStatus': 'RUNNING', 'healthStatus': 'HEALTHY',
+                                   'containers': [{'name': r.CONTAINER, 'imageDigest': self.image.rsplit('@', 1)[1]}]}]}
+            self.fail('Unexpected AWS operation: ' + operation)
+        aws.call.side_effect = call
+        publisher = Mock()
+        publisher.publish.return_value = self.image
+        with patch.dict(os.environ, self.env, clear=True), patch.object(r.d, 'authenticate', return_value=aws), \
+             patch.object(r.d, 'Publisher', return_value=publisher), patch('builtins.print'):
+            r.main([str(ROOT / 'deploy/dev.json')])
+        self.assertEqual(service['taskDefinition'], new)
+        self.assertEqual(registered['containerDefinitions'][0]['image'], self.image)
+        updates = [c for c in aws.call.call_args_list if c.args[1] == 'update-service']
+        self.assertEqual(len(updates), 1)
+
     def test_production_template_cannot_be_used_as_a_deployment_manifest(self):
         with self.assertRaises(r.d.DeployError):
             r.d.read_manifest(ROOT / 'deploy/prod.example.json')
