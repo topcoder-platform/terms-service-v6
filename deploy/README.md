@@ -41,3 +41,9 @@ python3 -m unittest discover -s /tmp/tc-deploy-scripts/tests -q
 ```
 
 These tests mock AWS and Docker. A real rollout additionally requires the infrastructure and context setup above. Application integration and dependency-audit gates remain in the `verify` job.
+
+## Runtime dependency packaging
+
+The pinned core dependency is a GitHub source archive, so npm initially extracts its development files as well as its compiled runtime. After pruning dev dependencies, the Docker build repacks that dependency with `npm pack --ignore-scripts` to honor its declared `files` list, retaining any nested production dependencies. The runtime keeps its package manifest, compiled code, public documentation and licenses; development sources, tests and the pnpm development lockfile stay out of the final image. No lifecycle scripts run during this repacking, and no vulnerability thresholds or findings are suppressed.
+
+CI starts the final image without networking to check its core exports, dependency loading, package contents and non-root user before saving the release artifact. The release regression test drives the real AWS adapter through task registration, service update and healthy-task verification, including ECS's `service` request parameter.

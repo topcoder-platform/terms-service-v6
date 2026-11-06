@@ -77,9 +77,9 @@ class RuntimeCheckedAWS:
         self.manifest = manifest
         self.env = aws.env
 
-    def call(self, service, operation, **kwargs):
-        response = self.aws.call(service, operation, **kwargs)
-        if service == 'ecs' and operation == 'describe-task-definition':
+    def call(self, api_service, operation, **kwargs):
+        response = self.aws.call(api_service, operation, **kwargs)
+        if api_service == 'ecs' and operation == 'describe-task-definition':
             validate_runtime(response['taskDefinition'], self.manifest)
         return response
 

@@ -51,6 +51,7 @@ jobs:
           command: |
             set -euo pipefail
             python3 -I /tmp/tc-deploy-scripts/build_image.py --image terms-service-v6:candidate
+            docker run --rm --network none --interactive --entrypoint node terms-service-v6:candidate --input-type=commonjs - < test/runtime-image.cjs
             mkdir -p /tmp/release
             docker save --output /tmp/release/image.tar terms-service-v6:candidate
       - persist_to_workspace:
