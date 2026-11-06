@@ -31,9 +31,9 @@ test('runtime packaging honors published files, preserves nested dependencies an
     for (const path of ['src', 'test', 'pnpm-lock.yaml']) assert.equal(existsSync(join(root, path)), false, path);
     for (const path of ['dist/index.js', 'README.md', 'LICENSE', 'node_modules/runtime-child/index.js']) assert.equal(existsSync(join(root, path)), true, path);
     assert.deepEqual(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')), manifest);
-    assert.equal(execFileSync(process.execPath, ['-e', 'console.log(require(process.argv[1]))', root], { encoding: 'utf8' }).trim(), '42');
+    assert.equal(execFileSync(process.execPath, ['-e', 'process.stdout.write(String(require(process.argv[1])))', root], { encoding: 'utf8' }).trim(), '42');
     packageCoreRuntime(root);
-    assert.equal(execFileSync(process.execPath, ['-e', 'console.log(require(process.argv[1]))', root], { encoding: 'utf8' }).trim(), '42');
+    assert.equal(execFileSync(process.execPath, ['-e', 'process.stdout.write(String(require(process.argv[1])))', root], { encoding: 'utf8' }).trim(), '42');
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
