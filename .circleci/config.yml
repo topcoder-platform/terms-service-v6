@@ -1,4 +1,20 @@
 version: 2.1
+executors:
+  reviewed:
+    docker:
+      - image: cimg/aws@sha256:4cf3768db00ddf9bc439b8c84e8a60c11a14edf81c8baf76f74132144f8340d5
+commands:
+  checkout-suite:
+    steps:
+      - run:
+          name: Verify deployment suite v2.0.9
+          command: |
+            set -euo pipefail
+            git init --quiet /tmp/tc-deploy-scripts
+            git -C /tmp/tc-deploy-scripts remote add origin https://github.com/topcoder-platform/tc-deploy-scripts.git
+            git -C /tmp/tc-deploy-scripts fetch --quiet --depth 1 origin refs/tags/v2.0.9
+            git -C /tmp/tc-deploy-scripts checkout --quiet --detach FETCH_HEAD
+            test "$(git -C /tmp/tc-deploy-scripts rev-parse HEAD)" = dc06de730f068a230efa9d5f4d4d9c80782d3bfb
 jobs:
   verify:
     docker:
@@ -15,42 +31,83 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run test:integration
       - run: npm audit --audit-level=low
+  deployment-checks:
+    executor: reviewed
+    steps:
+      - checkout
+      - checkout-suite
+      - run: python3 -m unittest discover -s deploy/tests -v
+      - run: python3 -m unittest discover -s scripts -p 'test_*.py' -v
+      - run: python3 -m unittest discover -s /tmp/tc-deploy-scripts/tests -q
+  build:
+    executor: reviewed
+    steps:
+      - checkout
+      - setup_remote_docker
+      - checkout-suite
+      - run:
+          name: Build committed source without deployment credentials
+          no_output_timeout: 30m
+          command: |
+            set -euo pipefail
+            python3 -I /tmp/tc-deploy-scripts/build_image.py --image terms-service-v6:candidate
+            mkdir -p /tmp/release
+            docker save --output /tmp/release/image.tar terms-service-v6:candidate
+      - persist_to_workspace:
+          root: /tmp/release
+          paths: [image.tar]
   deploy:
+    executor: reviewed
     parameters:
       environment:
-        type: string
-    docker:
-      - image: cimg/python:3.13
+        type: enum
+        enum: [dev, prod]
     environment:
-      APPNAME: terms-service-v6
       DEPLOY_ENV: << parameters.environment >>
     steps:
       - checkout
       - setup_remote_docker
-      - run: pip install boto3
+      - checkout-suite
+      - attach_workspace:
+          at: /tmp/release
       - run:
-          name: Scan image and deploy to existing ECS service
-          no_output_timeout: 25m
-          command: python scripts/deploy.py
+          name: Promote a scanned digest with repository-bound OIDC
+          no_output_timeout: 45m
+          command: |
+            set +x
+            set -euo pipefail
+            if [ ! -f "deploy/${DEPLOY_ENV}.json" ]; then
+              echo "Deployment target is not configured; complete deploy/README.md prerequisites." >&2
+              exit 1
+            fi
+            docker load --input /tmp/release/image.tar
+            python3 -I scripts/deploy.py "deploy/${DEPLOY_ENV}.json"
 workflows:
   build:
     jobs:
       - verify
+      - deployment-checks
+      - build:
+          requires: [verify, deployment-checks]
       - deploy:
           name: deploy-dev
           serial-group: << pipeline.project.slug >>/deploy-dev
-          environment: DEV
-          context: org-global
-          requires: [verify]
+          environment: dev
+          context: terms-service-v6-dev-deploy
+          requires: [build]
           filters:
             branches:
               only: develop
+            tags:
+              ignore: /.*/
       - deploy:
           name: deploy-prod
           serial-group: << pipeline.project.slug >>/deploy-prod
-          environment: PROD
-          context: org-global
-          requires: [verify]
+          environment: prod
+          context: terms-service-v6-prod-deploy
+          requires: [build]
           filters:
             branches:
               only: master
+            tags:
+              ignore: /.*/
