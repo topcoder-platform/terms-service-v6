@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const core = require('tc-core-library-js');
 const packageRoot = path.resolve('node_modules/tc-core-library-js');
-for (const name of ['createJwtVerifier', 'createM2MClient', 'createBusClient']) {
+for (const name of ['createJwtVerifier', 'createM2MClient', 'createBusApiClient']) {
   assert.equal(typeof core[name], 'function', `Missing packaged runtime export: ${name}`);
 }
 for (const name of ['src', 'test', 'pnpm-lock.yaml', 'tsconfig.json', 'eslint.config.mjs']) {
