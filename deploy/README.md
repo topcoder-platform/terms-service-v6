@@ -27,7 +27,7 @@ Production remains blocked while `prod.json` is absent; the example is deliberat
 
 ## Runtime and rollout safeguards
 
-`health-checks.json` records the existing Node health check. The suite preserves a matching check, can add it when absent with the new image, and rejects a conflicting check. Other task settings and secret bindings are preserved. The adapter validates runtime parameter paths on every task-definition read, including the registered revision readback.
+`health-checks.json` records the existing Node health check. The suite preserves a matching check, can add it when absent with the new image, and rejects a conflicting check. Other task settings and secret bindings are preserved, except for the existing API requirement to bind `ACCESS_CONTROL_BLOCKED_SUBJECTS` and `ACCESS_CONTROL_BLOCKED_USER_IDS` to their exact `/config/common/global-appvar/` SecureStrings. The adapter applies those two bindings during request construction; the shared suite verifies the actual registered task against the resulting request. The adapter validates runtime parameter paths on every task-definition read, including the registered revision readback.
 
 For the API, `JWT_AUDIENCE` must reference `/config/terms-service-v6/appvar/JWT_AUDIENCE` (or its exact account/region SSM ARN). Its injected value must be nonempty inside ECS; startup validates it before listening. This moves value validation out of the deployment job, whose identity cannot decrypt parameters. An empty value causes an unhealthy rollout and the shared suite fails the release.
 

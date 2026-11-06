@@ -142,6 +142,32 @@ class DeploymentTests(unittest.TestCase):
                 r.run_release(Mock(), self.m, {}, 'tag', Mock(), self.checks)
         self.assertIs(r.d.task_request, original)
 
+    def test_registration_readback_cannot_hide_missing_denylist_bindings(self):
+        old = r.d.arn(self.m, 'ecs', f'task-definition/{r.APP}:1')
+        new = r.d.arn(self.m, 'ecs', f'task-definition/{r.APP}:2')
+        aws = Mock()
+        registered = {}
+        def call(service, operation, **kwargs):
+            if operation == 'register-task-definition':
+                registered.update(deepcopy(kwargs))
+                return {'taskDefinition': {'taskDefinitionArn': new}}
+            if operation == 'describe-task-definition':
+                if kwargs['taskDefinition'] == old:
+                    return {'taskDefinition': deepcopy(self.task)}
+                saved = deepcopy(registered)
+                saved['containerDefinitions'][0]['secrets'] = [
+                    s for s in saved['containerDefinitions'][0]['secrets'] if s['name'] not in r.DENYLIST_NAMES]
+                return {'taskDefinition': saved}
+            self.fail('Unexpected AWS call before readback verification: ' + operation)
+        aws.call.side_effect = call
+        publisher = Mock()
+        publisher.publish.return_value = self.image
+        with patch.object(r.d, 'read_service', return_value={'taskDefinition': old}), \
+             patch.object(r.d, 'stable', return_value=True):
+            with self.assertRaisesRegex(r.d.DeployError, 'Registered task configuration differs'):
+                r.run_release(aws, self.m, {r.CONTAINER: r.APP + ':candidate'},
+                              'a' * 40 + '-42', publisher, self.checks)
+
 
 if __name__ == '__main__':
     unittest.main()

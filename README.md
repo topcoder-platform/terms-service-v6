@@ -14,11 +14,11 @@ Production approval happens in GitHub when the PR from `develop` to `master` is 
 
 GitHub runs CodeQL with extended security queries and Dependabot checks npm, Docker, and Actions dependencies. Runtime configuration retains legacy names so existing secret values can be reused.
 
-The deployment preserves the Node-based container health check, so the runtime image does not need curl. Images use immutable commit/build-number release tags and ECS runs the scanned digest. Each retry publishes under its own build number. Roles, resources, networking and SSM references remain intact, and a rollback fails the release. Application parameters live under `/config/terms-service-v6/appvar/`; the deployment identity cannot read their values.
+The deployment preserves the Node-based container health check, so the runtime image does not need curl. Images use immutable commit/build-number release tags and ECS runs the scanned digest. Each retry publishes under its own build number. Roles, resources and networking remain intact; the deployment retains the shared denylist binding update described below. A rollback fails the release. Application parameters live under `/config/terms-service-v6/appvar/`; the deployment identity cannot read their values.
 
 Compatibility includes the legacy numeric-string pagination headers and the existing database ordering of signed users. DocuSign return URLs interpolate `envelopeId` without evaluating caller-provided JavaScript.
 
-Shared M2M token acquisition, caching, and Bus API publishing use `tc-core-library-js` pinned to `v4.0.0-rc.1`. Event envelopes and best-effort publication behavior are preserved.
+Shared M2M token acquisition, caching, and Bus API publishing use `tc-core-library-js` pinned to the verified-email v4 backport (`c2df92b2227089909ab6e229df0ec6b658bb431a`). Event envelopes and best-effort publication behavior are preserved.
 
 JWT verification also uses the shared library. Legacy HS256 human tokens require an `AUTH_SECRET` of at least 32 bytes. RSA machine tokens must match `AUTH0_AUDIENCE`; set `JWT_AUDIENCE` to the trusted website/browser client audience as well as the M2M audience in `AUTH0_AUDIENCE`. Bind `/config/terms-service-v6/appvar/JWT_AUDIENCE` as a SecureString in the ECS task; use the same environment-specific browser audience as the website and Identity API. Deployment preflight rejects a missing or incorrect browser audience reference; ECS startup rejects an empty injected value before the service becomes healthy. Tokens require expiration, and conflicting identity claims are rejected. Route roles/scopes and existing HTTP error envelopes remain service-owned. The test command supplies a test-only signing secret.
 
