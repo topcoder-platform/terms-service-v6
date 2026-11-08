@@ -155,6 +155,27 @@ class DeploymentTests(unittest.TestCase):
         updates = [c for c in aws.call.call_args_list if c.args[1] == 'update-service']
         self.assertEqual(len(updates), 1)
 
+    def test_master_release_uses_production_oidc_and_target(self):
+        manifest = r.d.read_manifest(ROOT / 'deploy/prod.json')
+        env = {**self.env, 'CIRCLE_BRANCH': 'master'}
+        with patch.dict(os.environ, env, clear=True), patch.object(r.d, 'authenticate') as auth, \
+             patch.object(r.d, 'Publisher'), patch.object(r.d, 'deploy', return_value={}) as deploy, \
+             patch('builtins.print'):
+            r.main([str(ROOT / 'deploy/prod.json')])
+        auth.assert_called_once_with(manifest, 'test-oidc-token')
+        self.assertEqual(manifest['accountId'], '409275337247')
+        self.assertEqual(manifest['deployRoleArn'], f'arn:aws:iam::409275337247:role/{r.APP}-prod-deploy')
+        self.assertEqual(manifest['cluster'], 'terms-service-serverless')
+        self.assertEqual(manifest['service'], r.APP)
+        self.assertEqual(manifest['taskFamily'], r.APP)
+        self.assertEqual(deploy.call_args.args[1], manifest)
+
+    def test_develop_cannot_deploy_production(self):
+        with patch.dict(os.environ, self.env, clear=True), patch.object(r.d, 'authenticate') as auth:
+            with self.assertRaises(r.d.DeployError):
+                r.main([str(ROOT / 'deploy/prod.json')])
+            auth.assert_not_called()
+
     def test_production_template_cannot_be_used_as_a_deployment_manifest(self):
         with self.assertRaises(r.d.DeployError):
             r.d.read_manifest(ROOT / 'deploy/prod.example.json')

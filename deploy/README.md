@@ -15,15 +15,19 @@ The deployment identities were installed on 2026-11-06:
 
 Each role has a matching permissions boundary, exact repository/project/checkout-ref/config-ref OIDC v3 trust, ECS/ECR permissions scoped to this v6 service, and region-scoped Inspector read permissions. Each empty CircleCI context is restricted to this project and branch, denies SSH reruns and API-supplied configuration, and contains no broker or AWS credentials. Templates, installation receipts and IAM simulation results live in the private `v6-services-iac` repository under `services/terms-service-v6/deploy/` and `migration/2026-11-06-terms-oidc/`.
 
-Remaining runtime prerequisites:
+Runtime requirements:
 
 1. Keep immutable ECR tags, scan-on-push, positive capacity and ECS circuit-breaker rollback enabled. Runtime secret access remains on the ECS execution role; the deployment identity and STS session deny SSM, Secrets Manager, KMS decryption and role chaining.
 2. Ensure every runtime parameter under `/config/terms-service-v6/appvar/` is a `SecureString` through infrastructure configuration. CI validates references without fetching values or checking parameter types. All plaintext container environment entries remain prohibited.
-3. Provision the production v6 service in account `409275337247`; it was absent from `terms-service-serverless` during inspection. Its installed deployment role is scoped to cluster `terms-service-serverless`, service/task family/ECR repository `terms-service-v6`, and passing `ecsTaskExecutionRole` to ECS. Copy `prod.example.json` to `prod.json` only after verifying the runtime resource identifiers. The release adapter expects container `terms-service-container`. Do not redirect the v6 pipeline to the legacy production service.
+3. Production was provisioned on 2026-11-09 in account `409275337247`. `prod.json` matches the live cluster `terms-service-serverless`, service/task family/ECR repository `terms-service-v6`, container `terms-service-container`, execution role `ecsTaskExecutionRole`, and no task role. The production deployment role's trust, policy, permissions boundary, and 30 IAM permission decisions were verified against the infrastructure definitions.
 
-No application rollout or live CircleCI OIDC assumption was performed during identity provisioning.
+## Production releases
 
-Production remains blocked while `prod.json` is absent; the example is deliberately not a valid deployment manifest. The pipeline retains GitHub review/merge as production approval and adds no CircleCI approval job. It never falls back to the old broker or `/config/terms-service-v6/deployvar`.
+Merge `develop` into `master` to release production. CircleCI runs application verification, deployment checks, and the image build before `deploy-prod` uses the `terms-service-v6-prod-deploy` context and `CIRCLE_OIDC_TOKEN_V3` to assume `arn:aws:iam::409275337247:role/terms-service-v6-prod-deploy`. The repository, checkout branch, and configuration branch must match the production trust policy. Tags and other branches cannot deploy production. No static AWS credentials or Auth0 broker are used.
+
+Every release requires a healthy v6 ECS service with positive desired capacity, circuit-breaker rollback, an immutable scan-enabled ECR repository, production runtime SecureStrings, and the health check in `health-checks.json`. Runtime provisioning and load-balancer cutover are managed separately from application releases. Normal releases preserve routing and update only the v6 service. The release fails if the image scan or healthy-task verification fails.
+
+The production manifest was checked against the live ECS service and task roles. Tests verify that `master` selects the production OIDC role and target and that `develop` is rejected for the production manifest. Both production and dev CircleCI contexts were read back as empty and restricted to the expected project and branch.
 
 ## Runtime and rollout safeguards
 
