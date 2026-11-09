@@ -16,7 +16,7 @@
     "test:integration": "node test/setup-db.mjs && TERMS_TEST_DATABASE=1 npm test"
   },
   "dependencies": {
-    "@nestjs/core": "12.3.2",
+    "@nestjs/core": "12.4.0",
     "@nestjs/common": "12.3.2",
     "@nestjs/platform-express": "12.3.2",
     "@prisma/client": "7.10.1",
