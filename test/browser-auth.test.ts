@@ -25,7 +25,7 @@ test('terms detail accepts the configured browser audience while rejecting unrel
     'https://topcoder-dev.com/handle': 'browser-member',
     'https://topcoder-dev.com/roles': ['Member'], ...claims
   }).setProtectedHeader({ alg: 'RS256', kid: 'browser-test' })
-    .setIssuer(issuer).setAudience(audience).setExpirationTime('5m').sign(keys.privateKey);
+    .setIssuer(issuer).setAudience(audience).setIssuedAt().setExpirationTime('5m').sign(keys.privateKey);
   try {
     config.VALID_ISSUERS = JSON.stringify([issuer]); config.JWT_AUDIENCE = undefined;
     const browserToken = await sign(browserAudience);

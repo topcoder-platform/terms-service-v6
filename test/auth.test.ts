@@ -13,10 +13,15 @@ test('shared verifier handles legacy humans and audience-bound RSA machines with
   const server = createServer((_req, res) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ keys: [jwk] })); });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const issuer = `http://127.0.0.1:${(server.address() as any).port}/`;
-  const saved = { ...config }; config.VALID_ISSUERS = JSON.stringify([issuer]);
+  const saved = { ...config }; config.VALID_ISSUERS = JSON.stringify([issuer, 'https://legacy.terms.test']);
+  const previousPolicies = process.env.JWT_ISSUER_POLICIES;
+  process.env.JWT_ISSUER_POLICIES = JSON.stringify([
+    { issuer, algorithm: 'RS256', audience: config.AUTH0_AUDIENCE },
+    { issuer: 'https://legacy.terms.test', algorithm: 'HS256', allowMissingAudience: true, legacyHs256Until: new Date(Date.now() + 3_600_000).toISOString() }
+  ]);
   const sign = (claims: Record<string, any>, rsa = true) => new SignJWT(claims)
     .setProtectedHeader(rsa ? { alg: 'RS256', kid: 'test-rsa' } : { alg: 'HS256' })
-    .setIssuer(issuer).setExpirationTime('5m').sign(rsa ? keys.privateKey : new TextEncoder().encode(config.AUTH_SECRET));
+    .setIssuer(rsa ? issuer : 'https://legacy.terms.test').setIssuedAt().setExpirationTime('5m').sign(rsa ? keys.privateKey : new TextEncoder().encode(config.AUTH_SECRET));
   let policy: Policy = { auth: 'jwt', scopes: ['read:terms'], access: ['administrator'] };
   const guard = new AuthGuard({ get: () => policy } as any);
   async function authenticate(token?: string) {
@@ -51,6 +56,8 @@ test('shared verifier handles legacy humans and audience-bound RSA machines with
     assert.equal((await authenticate(await sign(machine))).isMachine, true);
   } finally {
     Object.assign(config, saved);
+    if (previousPolicies === undefined) delete process.env.JWT_ISSUER_POLICIES;
+    else process.env.JWT_ISSUER_POLICIES = previousPolicies;
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
   }
 });

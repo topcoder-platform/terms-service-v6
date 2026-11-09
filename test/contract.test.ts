@@ -10,7 +10,11 @@ import { config } from '../dist/config.js';
 let app: Awaited<ReturnType<typeof createApp>>;
 let calls: { topic: string; payload: any }[] = [];
 const issuer = JSON.parse(config.VALID_ISSUERS)[0];
-async function token(claims: Record<string, unknown> = {}) { return new SignJWT({ emailVerified: true, userId: 123, handle: 'contract-user', roles: ['Administrator'], ...claims }).setProtectedHeader({ alg: 'HS256' }).setIssuer(issuer).setExpirationTime('5m').sign(new TextEncoder().encode(config.AUTH_SECRET)); }
+process.env.JWT_ISSUER_POLICIES = JSON.stringify([{
+  issuer, algorithm: 'HS256', allowMissingAudience: true,
+  legacyHs256Until: new Date(Date.now() + 3_600_000).toISOString()
+}]);
+async function token(claims: Record<string, unknown> = {}) { return new SignJWT({ emailVerified: true, userId: 123, handle: 'contract-user', roles: ['Administrator'], ...claims }).setProtectedHeader({ alg: 'HS256' }).setIssuer(issuer).setIssuedAt().setExpirationTime('5m').sign(new TextEncoder().encode(config.AUTH_SECRET)); }
 before(async () => {
   app = await createApp();
   app.get(Integrations).postEvent = async (topic: string, payload: any) => { calls.push({ topic, payload }); return {}; };
