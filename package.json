@@ -22,7 +22,7 @@
     "@prisma/client": "7.10.1",
     "@prisma/adapter-pg": "7.10.1",
     "pg": "8.23.1",
-    "jose": "6.2.15",
+    "jose": "6.2.16",
     "rxjs": "7.8.2",
     "reflect-metadata": "0.2.2",
     "swagger-ui-express": "5.0.1",
