@@ -1,4 +1,4 @@
-FROM node:26.13.0-alpine AS build
+FROM node:26.13.1-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts --no-fund
@@ -9,7 +9,7 @@ COPY scripts/package-core-runtime.mjs ./scripts/package-core-runtime.mjs
 RUN npm run build && npm prune --omit=dev --omit=optional --ignore-scripts \
     && node scripts/package-core-runtime.mjs
 
-FROM node:26.13.0-alpine AS runtime
+FROM node:26.13.1-alpine AS runtime
 RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn* /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /app
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
