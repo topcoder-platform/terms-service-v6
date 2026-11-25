@@ -39,5 +39,8 @@
     "supertest": "7.3.1",
     "@types/supertest": "7.2.1",
     "@types/swagger-ui-express": "4.1.8"
+  },
+  "overrides": {
+    "effect@^3": "3.22.1"
   }
 }
