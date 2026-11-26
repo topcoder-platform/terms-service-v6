@@ -1,6 +1,6 @@
 # terms-service-v6
 
-NestJS and TypeScript replacement for `terms-service`. Uses Node 26.13.0 and Prisma 7 with the PostgreSQL driver adapter. Existing `/v5` routes, table names, identifiers, event topics and wire representations are retained.
+NestJS and TypeScript replacement for `terms-service`. Uses Node 26.13.1 and Prisma 7 with the PostgreSQL driver adapter. Existing `/v5` routes, table names, identifiers, event topics and wire representations are retained.
 
 Run `npm ci --ignore-scripts`, `npm run build`, then `npm start`. `npm test` runs HTTP contract tests. For database tests, create a disposable local database named `terms_contract_test`, set `POSTGRES_URL` to its connection URL, and run `npm run test:integration`. The test setup refuses non-local databases or a different database name.
 
