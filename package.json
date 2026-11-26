@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=26.13.0 <27"
+    "node": "26.13.1"
   },
   "scripts": {
     "generate": "prisma generate",
@@ -16,9 +16,9 @@
     "test:integration": "node test/setup-db.mjs && TERMS_TEST_DATABASE=1 npm test"
   },
   "dependencies": {
-    "@nestjs/core": "12.3.2",
-    "@nestjs/common": "12.3.2",
-    "@nestjs/platform-express": "12.3.2",
+    "@nestjs/core": "12.6.3",
+    "@nestjs/common": "12.6.3",
+    "@nestjs/platform-express": "12.6.3",
     "@prisma/client": "7.10.1",
     "@prisma/adapter-pg": "7.10.1",
     "pg": "8.23.1",
